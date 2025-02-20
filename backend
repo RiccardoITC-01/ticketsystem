@@ -1,0 +1,58 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+mongoose.connect("mongodb://localhost:27017/tickets", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const ticketSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  status: { type: String, default: "open" },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Ticket = mongoose.model("Ticket", ticketSchema);
+
+// Creazione di un nuovo ticket
+app.post("/tickets", async (req, res) => {
+  try {
+    const ticket = new Ticket(req.body);
+    await ticket.save();
+    res.status(201).json(ticket);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Ottenere tutti i ticket
+app.get("/tickets", async (req, res) => {
+  try {
+    const tickets = await Ticket.find();
+    res.json(tickets);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Chiudere un ticket
+app.put("/tickets/:id/close", async (req, res) => {
+  try {
+    const ticket = await Ticket.findByIdAndUpdate(req.params.id, { status: "closed" }, { new: true });
+    res.json(ticket);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
