@@ -1,0 +1,67 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const App = () => {
+  const [tickets, setTickets] = useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    const response = await axios.get("http://localhost:5000/tickets");
+    setTickets(response.data);
+  };
+
+  const createTicket = async () => {
+    await axios.post("http://localhost:5000/tickets", { title, description });
+    setTitle("");
+    setDescription("");
+    fetchTickets();
+  };
+
+  const closeTicket = async (id) => {
+    await axios.put(`http://localhost:5000/tickets/${id}/close`);
+    fetchTickets();
+  };
+
+  return (
+    <div className="p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Ticket System</h1>
+      <div className="mb-4">
+        <input
+          className="border p-2 w-full mb-2"
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <textarea
+          className="border p-2 w-full"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <button className="bg-blue-500 text-white px-4 py-2 mt-2" onClick={createTicket}>Create Ticket</button>
+      </div>
+      <ul>
+        {tickets.map((ticket) => (
+          <li key={ticket._id} className="border p-2 mb-2 flex justify-between items-center">
+            <div>
+              <h3 className="font-bold">{ticket.title}</h3>
+              <p>{ticket.description}</p>
+              <p className={`text-sm ${ticket.status === "open" ? "text-green-500" : "text-red-500"}`}>{ticket.status}</p>
+            </div>
+            {ticket.status === "open" && (
+              <button className="bg-red-500 text-white px-3 py-1" onClick={() => closeTicket(ticket._id)}>Close</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default App;
